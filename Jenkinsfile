@@ -13,28 +13,22 @@ pipeline {
             timestamps()
         }
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage("Build") {
             steps {
                 echo "This is the Build stage used using dynamic declaring"
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ProjectOne/app"
             }
         }
         stage("Test") {
             steps {
-                echo "This is the Test stage."
-                sh """
-                docker run -d -p ${TEST_PORT}:80 --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
-                sleep 5
-                curl -f http://localhost:${TEST_PORT}/index/status
-                """
+            sh """
+            docker run -d --network jenkins-net --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
+            sleep 5
+            curl -f http://${CONTAINER_NAME}/index/status
+            """
             }
         }
+
         stage("Push to ECR") {
             steps {
                 echo "Pushing the image to ECR repository."
