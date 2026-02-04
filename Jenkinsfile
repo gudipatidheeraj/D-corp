@@ -13,6 +13,12 @@ pipeline {
             timestamps()
         }
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage("Build") {
             steps {
                 echo "This is the Build stage used using dynamic declaring"
