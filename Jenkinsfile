@@ -7,6 +7,8 @@ pipeline {
             TEST_PORT = "8003"
             ECR_URL = "818988015178.dkr.ecr.ap-south-1.amazonaws.com/d-corp"
             AWS_REGION = "ap-south-1"
+            AWS_SHARED_CREDENTIALS_FILE = "/var/jenkins_home/.aws/credentials"
+            AWS_CONFIG_FILE = "/var/jenkins_home/.aws/config"
         }
         options {
             timeout(time: 40,unit: 'MINUTES')
