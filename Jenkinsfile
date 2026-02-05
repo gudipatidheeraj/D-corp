@@ -5,8 +5,11 @@ pipeline {
             IMAGE_TAG = "${BUILD_NUMBER}"
             CONTAINER_NAME = "dcorp-${BUILD_NUMBER}"
             TEST_PORT = "8003"
+            NEWTEST_PORT = "${8000 + BUILD_NUMBER.toInteger()}"
             ECR_URL = "818988015178.dkr.ecr.ap-south-1.amazonaws.com/d-corp"
             AWS_REGION = "ap-south-1"
+            AWS_SHARED_CREDENTIALS_FILE = "/var/jenkins_home/.aws/credentials"
+            AWS_CONFIG_FILE = "/var/jenkins_home/.aws/config"
         }
         options {
             timeout(time: 40,unit: 'MINUTES')
@@ -16,19 +19,28 @@ pipeline {
         stage("Build") {
             steps {
                 echo "This is the Build stage used using dynamic declaring"
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ProjectOne/app"
             }
         }
         stage("Test") {
             steps {
-                echo "This is the Test stage."
-                sh """
-                docker run -d -p ${TEST_PORT}:80 --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
-                sleep 5
-                curl -f http://localhost:${TEST_PORT}/index/status
-                """
+            sh """
+            docker run -d --network jenkins-net --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
+            sleep 5
+            curl -fL http://${CONTAINER_NAME}/index/status
+            """
             }
         }
+        stage("Test (Localhost Port Publish)") {
+            steps {
+            sh """
+            docker run -d -p ${NEWTEST_PORT}:80 --name ${CONTAINER_NAME}-host ${IMAGE_NAME}:${IMAGE_TAG}
+            sleep 5
+            curl http://host.docker.internal:${NEWTEST_PORT}
+            """
+            }
+        }
+
         stage("Push to ECR") {
             steps {
                 echo "Pushing the image to ECR repository."
